@@ -25,7 +25,6 @@ public class SplunkJenkinsProfile {
     private Destination dest;
 
 
-    @DataBoundConstructor
     public SplunkJenkinsProfile(String name, String host, int port, String destPath, String prvkey) {
         this.dest = new Destination(destPath);
         this.name = name;
@@ -48,7 +47,7 @@ public class SplunkJenkinsProfile {
     public final int getPort() {
         return port;
     }
-    public final String getPrvkey() {
+    public final String getPrvKey() {
         return prvkey;
     }
 

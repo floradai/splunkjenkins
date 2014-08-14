@@ -11,25 +11,18 @@
     tags they use. Views are always organized according to its owner class,
     so it should be straightforward to find them.
   -->
-  <f:section title="Splunk Jenkins">
-      <f:entry title="Name" description="User of machine instance">
-          <f:textbox field="name"/>
+  <f:section title="Splunk Jenkins - SJNotifier">
+      <f:entry title="Name" description="Attempt to get name">
+          <f:textbox name="sjnameToken" value="${descriptor.getToken()}"/>
       </f:entry>
-
-      <f:entry title="Splunk Instance Location" description="Host or IP Name of Splunk Instance">
-          <f:textbox field="host"/>
+      <f:entry title="Name" description="Attempt to get name">
+          <f:textbox name="sjnameToken" value="${descriptor.getToken()}"/>
       </f:entry>
-
-      <f:entry title="Spunk port" description="Port of machine">
-          <f:textbox field="port"/>
+      <f:entry title="Name" description="Attempt to get name">
+          <f:textbox name="sjnameToken" value="${descriptor.getToken()}"/>
       </f:entry>
-
-      <f:entry title="Destination Path" >
-          <f:textbox field="destPath"/>
-      </f:entry>
-
-      <f:entry title="Private key"  description="Path of where private key for SSH is held">
-          <f:textbox field="prvkey"/>
+      <f:entry title="Name" description="Attempt to get name">
+          <f:textbox name="sjnameToken" value="${descriptor.getToken()}"/>
       </f:entry>
   </f:section>
 </j:jelly>
