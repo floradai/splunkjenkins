@@ -1,0 +1,20 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <f:section title="SJNotifier">
+        <f:entry title="Name" description="get sjname" field="name">
+            <f:textbox name="name"/>
+        </f:entry>
+        <f:entry title="Host" description="get sjhost" field="host">
+            <f:textbox name="host"/>
+        </f:entry>
+        <f:entry title="Port" description="get sjport" field="port">
+            <f:textbox name="port"/>
+        </f:entry>
+        <f:entry title="DestPath" description="get sjdest" field="dest">
+            <f:textbox name="dest"/>
+        </f:entry>
+        <f:entry title="PrvKey" description="get sjprvkey"  field="prvkey">
+            <f:textbox name="prvkey"/>
+        </f:entry>
+    </f:section>
+
+</j:jelly>

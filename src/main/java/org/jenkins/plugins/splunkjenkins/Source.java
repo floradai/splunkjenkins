@@ -1,10 +1,12 @@
 package org.jenkins.plugins.splunkjenkins;
 
+import hudson.FilePath;
 import hudson.model.AbstractBuild;
 import hudson.model.Run;
 import jenkins.model.StandardArtifactManager;
 import jenkins.util.VirtualFile;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -51,13 +53,16 @@ public class Source {
      * @return All children (files & directories) of the Source or null if not a directory or couldn't get listing
      * @throws IOException
      */
-    public VirtualFile[] getChildren() throws IOException {
-        if (srcPath.isDirectory() && srcPath.canRead())
-            return (VirtualFile[]) getChildren(srcPath).toArray();
-        return null;
+    public ArrayList<VirtualFile> getChildren() throws IOException {
+        VirtualFile cleaned = cleanPath();
+        //if (cleaned.isDirectory() && cleaned.canRead()) {
+            return getChildren(cleaned);
+        //}
+
+
     }
 
-    protected ArrayList<VirtualFile> getChildren(VirtualFile f) throws IOException {
+    private ArrayList<VirtualFile> getChildren(VirtualFile f) throws IOException {
         ArrayList<VirtualFile> k = new ArrayList<VirtualFile>();
         for(VirtualFile file : f.list()) {
             if (file.isDirectory()) {
@@ -69,6 +74,15 @@ public class Source {
             }
         }
         return k;
+    }
+
+
+    public VirtualFile cleanPath() {
+        String cleanPath = this.srcPath.toString();
+        cleanPath = cleanPath.substring(cleanPath.indexOf("/"));
+        cleanPath = cleanPath.substring(0, cleanPath.lastIndexOf("/")+1);
+        File f = new File(cleanPath);
+        return VirtualFile.forFile(f);
     }
 
 
