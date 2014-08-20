@@ -8,6 +8,7 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Publisher;
 import hudson.tasks.Recorder;
 import hudson.util.FormValidation;
+import hudson.util.Secret;
 import org.kohsuke.stapler.QueryParameter;
 
 import javax.xml.ws.http.HTTPException;
@@ -47,11 +48,13 @@ public class SplunkConnect {
 
 
     public boolean index(String indexname) {
-        service.getIndexes().get("indexname");
+        service.getIndexes().get(indexname);
         return true;
     }
 
-    public boolean oneshotUpload() {
+    public boolean oneshotUpload(String indexname, String filepath) {
+        Index ind = service.getIndexes().get(indexname);
+        ind.upload(filepath);
         return false;
     }
 
@@ -68,22 +71,5 @@ public class SplunkConnect {
         return false;
     }
 
-
-    public BuildStepMonitor getRequiredMonitorService() {
-        return null;
-    }
-
-   /* @Extension
-    public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
-        @Override
-        public String getDisplayName() {
-            return null;
-        }
-
-        @Override
-        public boolean isApplicable(Class<? extends AbstractProject> aClass) {
-            return true;
-        }
-    }*/
 }
 

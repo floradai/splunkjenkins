@@ -2,6 +2,7 @@ package org.jenkins.plugins.splunkjenkins;
 
 import com.jcraft.jsch.*;
 import com.trilead.ssh2.SFTPException;
+import hudson.util.Secret;
 import jenkins.util.VirtualFile;
 import org.kohsuke.stapler.DataBoundConstructor;
 
@@ -21,17 +22,19 @@ public class SplunkJenkinsProfile {
     private int port;
     private String destPath;
     private String prvkey;
+    private String prvkeypass;
 
     private Destination dest;
 
 
-    public SplunkJenkinsProfile(String name, String host, int port, String destPath, String prvkey) {
+    public SplunkJenkinsProfile(String name, String host, int port, String destPath, String prvkey, String prvkeypass) {
         this.dest = new Destination(destPath);
         this.name = name;
         this.host = host;
         this.port = port;
         this.destPath = destPath;
         this.prvkey = prvkey;
+        this.prvkeypass = prvkeypass;
     }
 
 
@@ -50,6 +53,7 @@ public class SplunkJenkinsProfile {
     public final String getPrvKey() {
         return prvkey;
     }
+    public final String getPrvkeypass() {return prvkeypass;}
 
     /**
      * Uploads files to Machine for Splunk Instance
@@ -66,9 +70,8 @@ public class SplunkJenkinsProfile {
 
         try {
             JSch jsch = new JSch();
-            //jsch.setKnownHosts("/Users/fdai/.ssh/known_hosts");
-            jsch.addIdentity(prvkey, );
-            session = jsch.getSession(name, host, 8010);
+            jsch.addIdentity(prvkey, prvkeypass);
+            session = jsch.getSession(name, host, port);
             session.setConfig("StrictHostKeyChecking", "no");
             session.connect();
             channel = session.openChannel("sftp");
@@ -76,14 +79,16 @@ public class SplunkJenkinsProfile {
             channelSftp = (ChannelSftp) channel;
             for (VirtualFile f : source.getChildren()) {
                 if (f.isFile()) {
-                    String srcFilePath = f.toURI().getRawPath();
-                    String fixed = srcFilePath.substring(srcFilePath.indexOf("/"));
-                    String destFile = srcFilePath.substring(srcFilePath.indexOf("jobs/"));
-                    checkDirPath(channelSftp, destFile);
-                    File file = new File(fixed);
-                    String dest = destPath+destFile;
-                    inp = new FileInputStream(file);
-                    channelSftp.put(inp, dest);
+                    String srcURI = f.toURI().getRawPath();
+                    String srcFile = srcURI.substring(srcURI.indexOf("/"));
+                    String destFile = srcFile.substring(srcFile.indexOf("jobs/"));
+
+                    inp = new FileInputStream(srcFile);
+
+                    if (checkDirPath(channelSftp, destFile))
+                        channelSftp.put(inp, destPath+"/"+destFile);
+                    else throw new Exception("Directory check did not check");
+
                 } else if (f.isDirectory()) {
                     throw new IOException("Should be no directories: Check Source.java");
                 }
@@ -148,42 +153,6 @@ public class SplunkJenkinsProfile {
         }
     }
 
-
-    public boolean testUpload(Source source) throws JSchException, IOException, SftpException {
-        Session session = null;
-        Channel channel = null;
-        ChannelSftp channelSftp = null;
-        FileInputStream inp = null;
-
-        try {
-            JSch jsch = new JSch();
-            session.setPortForwardingL(8010, "localhost", 22);
-            session.connect();
-            channel = session.openChannel("sftp");
-            channel.connect();
-            channelSftp = (ChannelSftp) channel;
-
-            for (VirtualFile f : source.getChildren()) {
-                if (f.isFile()) {
-                    File file = new File(dest.getPath() + f.getName());
-                    String destFile = destPath + f;
-                    inp = (FileInputStream) f.open();
-                    channelSftp.put(inp, destFile);
-                } else if (f.isDirectory()) {
-                    throw new IOException("Should be no directories: Check Source.java");
-                }
-            }
-
-        } catch (Exception e) {
-            return false;
-        } finally {
-            if (channel != null)
-                channel.disconnect();
-            if (session != null)
-                session.disconnect();
-        }
-        return true;
-    }
 
     /** Maybe socket programming
      * CON: requires server side set up

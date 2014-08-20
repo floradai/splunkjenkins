@@ -7,7 +7,7 @@
             <f:textbox name="host"/>
         </f:entry>
         <f:entry title="Port" description="get sjport" field="port">
-            <f:textbox name="port"/>
+            <f:textbox name="port" default="22"/>
         </f:entry>
         <f:entry title="DestPath" description="get sjdest" field="dest">
             <f:textbox name="dest"/>
@@ -15,6 +15,25 @@
         <f:entry title="PrvKey" description="get sjprvkey"  field="prvkey">
             <f:textbox name="prvkey"/>
         </f:entry>
+        <f:entry title="PrvKey Passphrase" description="If private key needs passphrase authentication" field="pkeypass">
+            <f:password name="pkeypass"/>
+        </f:entry>
+
+        <f:optionalBlock name="optSplunk" field="optSplunk" title="Splunk it?" >
+            <f:entry title="Splunk Host" field="splunkhost">
+                <f:textbox />
+            </f:entry>
+            <f:entry title="Splunk Port" field="splunkport">
+                <f:textbox default="8089"/>
+            </f:entry>
+            <f:entry title="Splunk User" field="splunkuser">
+                <f:textbox />
+            </f:entry>
+            <f:entry title="Splunk Pass" field="splunkpass">
+                <f:password/>
+            </f:entry>
+
+        </f:optionalBlock>
     </f:section>
 
 </j:jelly>
