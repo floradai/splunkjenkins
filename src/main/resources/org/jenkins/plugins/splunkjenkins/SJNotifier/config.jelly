@@ -3,14 +3,14 @@
         <f:checkbox default="true"/>
     </f:entry>
 
-    <f:entry title="Copy from $BUILD_DIR/archive?" field="optArchiveSel">
-        <f:checkbox name="optArchiveSel" default="true"/>
+    <f:entry title="Copy from BUILD_DIR/archive?" field="optArchiveSel">
+        <f:checkbox checked="${descriptor.getOptArchiveSel()}"/>
     </f:entry>
-    <f:entry title="Copy from $BUILD_DIR?" field="optBuildSel">
-        <f:checkbox name="optBuildSel" default="true"/>
+    <f:entry title="Copy from BUILD_DIR?" field="optBuildSel">
+        <f:checkbox checked="${descriptor.getOptBuildSel()}"/>
     </f:entry>
-    <f:entry title="Copy from $WORKSPACE_DIR?" field="optWorkspaceSel">
-        <f:checkbox name="optWorkspaceSel" default="true"/>
+    <f:entry title="Copy from WORKSPACE_DIR?" field="optWorkspaceSel">
+        <f:checkbox checked="${descriptor.getOptWorkspaceSel()}"/>
     </f:entry>
 
 

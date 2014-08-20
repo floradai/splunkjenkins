@@ -68,7 +68,7 @@ public final class SJNotifier extends Notifier implements Describable<Publisher>
         this.build = optBuildSel;
 
         this.sHost = optSplunk ? sHost : null;
-        this.sPort = optSplunk ? sPort : null;
+        this.sPort = optSplunk ? sPort : -1;
         this.sUser = optSplunk ? sUser : null;
         this.sPass = optSplunk ? sPass : null;
     }
