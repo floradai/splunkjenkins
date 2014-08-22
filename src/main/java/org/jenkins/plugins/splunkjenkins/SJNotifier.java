@@ -1,7 +1,6 @@
 package org.jenkins.plugins.splunkjenkins;
 
 import hudson.Extension;
-import hudson.FilePath;
 import hudson.Launcher;
 import hudson.model.*;
 import hudson.tasks.BuildStepDescriptor;
@@ -9,8 +8,9 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
-import hudson.util.Secret;
 import static hudson.Util.fixEmptyAndTrim;
+import static hudson.Util.getDigestOf;
+
 import jenkins.model.StandardArtifactManager;
 import jenkins.util.VirtualFile;
 import net.sf.json.JSONException;
@@ -23,7 +23,6 @@ import sun.text.resources.FormatData_es_EC;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -51,11 +50,14 @@ public final class SJNotifier extends Notifier implements Describable<Publisher>
     private String sUser;
     private String sPass;
 
+    private boolean doOneShot;
+    private String splunkIndex;
 
     @DataBoundConstructor
     public SJNotifier(String name, String host, int port, String dest, String prvkey, String pkeypass,
                       boolean canSplunk, boolean optBuildSel, boolean optArchiveSel, boolean optWorkspaceSel,
-                      boolean optSplunk, String sHost, int sPort, String sUser, String sPass ) {
+                      boolean optSplunk, String sHost, int sPort, String sUser, String sPass,
+                      boolean optOneShot, String splunkInd) {
         this.sjname = name;
         this.sjhost = host;
         this.sjport = port;
@@ -71,7 +73,11 @@ public final class SJNotifier extends Notifier implements Describable<Publisher>
         this.sPort = optSplunk ? sPort : -1;
         this.sUser = optSplunk ? sUser : null;
         this.sPass = optSplunk ? sPass : null;
+
+        this.doOneShot = optOneShot;
+        this.splunkIndex = splunkInd;
     }
+
 
     //Getter methods
     public String getSJname() { return this.sjname;}
@@ -80,10 +86,11 @@ public final class SJNotifier extends Notifier implements Describable<Publisher>
     public String getSJdest() {return this.sjdest;}
     public String getSjprvkey() {return this.sjprvkey;}
     public String getSjprvkeypass() {return this.sjprvkeypass;}
-    public String getsPass() { return sPass; }
-    public String getsUser() { return sUser; }
-    public int getsPort() { return sPort; }
-    public String getsHost() { return sHost; }
+    public String getSplunkPass() { return sPass; }
+    public String getSplunkUser() { return sUser; }
+    public int getSplunkPort() { return sPort; }
+    public String getSplunkHost() { return sHost; }
+    public boolean getOneShot() {return doOneShot;}
 
     @Override
     public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) throws InterruptedException, IOException {
@@ -95,27 +102,21 @@ public final class SJNotifier extends Notifier implements Describable<Publisher>
         this.sjprvkey = getDescriptor().getPrvkey();
         this.sjprvkeypass = getDescriptor().getPkeypass();
 
+        this.sPass = getDescriptor().getSplunkpass();
+        this.sUser = getDescriptor().getSplunkuser();
+        this.sHost = getDescriptor().getSplunkhost();
+        this.sPort = getDescriptor().getSplunkport();
 
         StandardArtifactManager sam = new StandardArtifactManager(build);
         Source s = new Source(build.getProject().getName(), build.getNumber(), sam.root(), this.build, this.archive, this.workspace);
         SplunkJenkinsProfile spj = new SplunkJenkinsProfile(getSJname(), getSJhost(), getSJport(), getSJdest(), getSjprvkey(), getSjprvkeypass());
+        SplunkConnect splunkInst= new SplunkConnect(getSplunkHost(), getSplunkPort(), getSplunkUser(), getSplunkPass(), this.doOneShot, false, this.splunkIndex);
         try {
-            spj.upload(s);
+            spj.upload(s, splunkInst); //TODO: add boolean to check if oneShot upload or apply monitor?
         } catch (Exception e) {
             throw new IOException("problem with upload call in SJNotifier", e);
         }
 
-        if (toSplunk()) {
-            SplunkConnect splunk = new SplunkConnect(getsHost(), getsPort(), getsUser(), getsPass());
-            boolean isConnected = splunk.setup();
-            if(isConnected) {
-
-            } else {
-                LOGGER.log(Level.SEVERE, "Splunk cannot connect - End of Performance");
-            }
-
-
-        }
         return true;
 
     }
@@ -165,9 +166,12 @@ public final class SJNotifier extends Notifier implements Describable<Publisher>
             optArchiveSel = formData.getBoolean("optArchiveSel");
             optBuildSel = formData.getBoolean("optBuildSel");
             optWorkspaceSel = formData.getBoolean("optWorkspaceSel");
+            boolean oneShot = formData.getBoolean("optOneShot");
+            String splunkIndex = formData.getString("splunkIndex");
             SJNotifier sjn = new SJNotifier(this.name, this.host, this.port, this.dest, this.prvkey, this.pkeypass,
                     formData.getBoolean("canSplunk"), optBuildSel, optArchiveSel, optWorkspaceSel,
-                    this.optSplunk, this.splunkhost, this.splunkport, this.splunkuser, this.splunkpass);
+                    this.optSplunk, this.splunkhost, this.splunkport, this.splunkuser, this.splunkpass,
+                    oneShot, splunkIndex);
             return sjn;
         }
 
@@ -181,11 +185,12 @@ public final class SJNotifier extends Notifier implements Describable<Publisher>
             this.pkeypass = json.getString("pkeypass");
 
             try {
-                this.optSplunk = json.getBoolean("optSplunk");
-                this.splunkhost = optSplunk ? json.getString("splunkhost") : null;
-                this.splunkport = optSplunk ? json.getInt("splunkport") : null;
-                this.splunkuser = optSplunk ? json.getString("splunkuser") : null;
-                this.splunkpass = optSplunk ? json.getString("splunkpass") : null;
+                JSONObject info = json.getJSONObject("optSplunk");
+                this.optSplunk = true;
+                this.splunkhost = info.getString("splunkhost");
+                this.splunkport = info.getInt("splunkport");
+                this.splunkuser = info.getString("splunkuser");
+                this.splunkpass = info.getString("splunkpass");
             } catch (JSONException e) {
                 LOGGER.log(Level.INFO, "NO spelunking");
                 this.optSplunk = false;
@@ -197,6 +202,8 @@ public final class SJNotifier extends Notifier implements Describable<Publisher>
             save();
             return true;
         }
+
+
 
         @Override
         public String getDisplayName() {

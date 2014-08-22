@@ -13,6 +13,13 @@
         <f:checkbox checked="${descriptor.getOptWorkspaceSel()}"/>
     </f:entry>
 
+    <f:entry title="Oneshot upload to Splunk" field="optOneShot">
+        <f:checkbox checked="${it.getOneShot()}"/>
+    </f:entry>
+    <f:entry title="Index" field="splunkIndex">
+        <f:textbox/>
+    </f:entry>
+
 
 
 </j:jelly>

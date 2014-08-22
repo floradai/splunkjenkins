@@ -10,6 +10,7 @@ import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Vector;
+import java.util.logging.Level;
 
 
 /**
@@ -61,8 +62,7 @@ public class SplunkJenkinsProfile {
      *      Example - destPath = /Home/jenkins/
      *                  filepath = jobs/jobName/build/buildDate/*
      */
-    public boolean upload(Source source) throws JSchException, SftpException, FileNotFoundException, IOException{
-
+    public boolean upload(Source source, SplunkConnect splunk) throws JSchException, SftpException, FileNotFoundException, IOException{
         Session session = null;
         Channel channel = null;
         ChannelSftp channelSftp = null;
@@ -86,8 +86,14 @@ public class SplunkJenkinsProfile {
                     inp = new FileInputStream(srcFile);
 
                     if (checkDirPath(channelSftp, destFile))
-                        channelSftp.put(inp, destPath+"/"+destFile);
-                    else throw new Exception("Directory check did not check");
+                        channelSftp.put(inp, destPath + "/" + destFile);
+                    if (splunk.isDoOneShot()) {
+                        if (!splunk.isConnected()) {
+                            splunk.setup();
+                        }
+                        splunk.oneshotUpload(splunk.getDestInd(), destPath + "/" + destFile);
+
+                    }else {throw new Exception("Directory check did not check");}
 
                 } else if (f.isDirectory()) {
                     throw new IOException("Should be no directories: Check Source.java");
@@ -106,6 +112,8 @@ public class SplunkJenkinsProfile {
         }
         return true;
     }
+
+
 
 
     private boolean checkDirPath(ChannelSftp sftp, String filePath)  {
@@ -152,36 +160,4 @@ public class SplunkJenkinsProfile {
             return this.v;
         }
     }
-
-
-    /** Maybe socket programming
-     * CON: requires server side set up
-     *
-     * public boolean socketUpload(Source source) throws IOException {
-
-        Socket socket = null;
-        OutputStream out = null;
-        BufferedInputStream inp = null;
-        try {
-            socket = new Socket(host, port);
-            if (socket.isConnected()) {
-                for (VirtualFile f : source.getChildren()) {
-                    File file = new File(f.toURI().toString());
-                    inp = new BufferedInputStream(new FileInputStream(file));
-                    byte[] bytes = new byte[(int)file.length()];
-                    out = socket.getOutputStream();
-                    out.write(bytes);
-                    out.flush();
-                }
-            }
-        }
-        finally {
-            if (socket != null)
-                socket.close();
-            if (inp != null)
-                inp.close();
-        }
-
-        return true;
-    }*/
 }
